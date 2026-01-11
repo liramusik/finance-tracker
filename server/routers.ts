@@ -368,29 +368,15 @@ export const appRouter = router({
         }
 
         try {
+          // Solo limpiar transacciones, no cuentas ni tarjetas
           const transactions = await db.getTransactionsByUserId(ctx.user.id);
           for (const tx of transactions) {
             await db.deleteTransaction(tx.id, ctx.user.id);
           }
 
-          const creditCards = await db.getCreditCardsByUserId(ctx.user.id);
-          for (const card of creditCards) {
-            await db.deleteCreditCard(card.id, ctx.user.id);
-          }
-
-          const accounts = await db.getAccountsByUserId(ctx.user.id);
-          for (const account of accounts) {
-            await db.deleteAccount(account.id, ctx.user.id);
-          }
-
-          const categories = await db.getCategoriesByUserId(ctx.user.id);
-          for (const category of categories) {
-            await db.deleteCategory(category.id, ctx.user.id);
-          }
-
-          return { success: true, message: "Todos los datos han sido eliminados" };
+          return { success: true, message: "Todas las transacciones han sido eliminadas" };
         } catch (error) {
-          throw new Error(`Error al limpiar datos: ${error instanceof Error ? error.message : String(error)}`);
+          throw new Error(`Error al limpiar transacciones: ${error instanceof Error ? error.message : String(error)}`);
         }
       }),
   }),

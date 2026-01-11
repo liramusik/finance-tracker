@@ -135,6 +135,7 @@
 - [ ] Eliminar datos de test de tarjetas (requiere acceso DB directo)
 - [x] Mover botón de limpiar datos a sección de Transacciones
 - [x] Crear función para limpiar solo transacciones (no cuentas/tarjetas)
+- [x] Corregir función clearAllData para no eliminar cuentas ni tarjetas
 
 ### Mejoras Futuras
 - [ ] Edición de conceptos personalizados de transacciones
