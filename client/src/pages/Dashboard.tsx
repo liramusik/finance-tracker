@@ -1,16 +1,77 @@
-import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, CreditCard, TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Wallet, CreditCard, TrendingUp, TrendingDown, DollarSign, Calendar, Trash2 } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { DraggableCard } from "@/components/DraggableCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { data: accounts, isLoading: accountsLoading } = trpc.accounts.list.useQuery();
   const { data: creditCards, isLoading: cardsLoading } = trpc.creditCards.list.useQuery();
   const { data: transactions, isLoading: transactionsLoading } = trpc.transactions.recent.useQuery({ limit: 100 });
   const { data: summary, isLoading: summaryLoading } = trpc.transactions.summary.useQuery();
+  const clearDataMutation = trpc.admin.clearAllData.useMutation();
+
+  const [cardOrder, setCardOrder] = useState<string[]>(["balance", "debt", "income", "expenses"]);
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   const isLoading = accountsLoading || cardsLoading || transactionsLoading || summaryLoading;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setCardOrder((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const handleClearData = async () => {
+    try {
+      await clearDataMutation.mutateAsync();
+      toast.success("Todos los datos han sido eliminados correctamente");
+      setShowClearDialog(false);
+      window.location.reload();
+    } catch (error) {
+      toast.error("Error al limpiar datos");
+    }
+  };
 
   // Calculate totals
   const totalBalance = useMemo(() => {
@@ -46,6 +107,77 @@ export default function Dashboard() {
     }));
   }, [summary]);
 
+  const summaryCards = {
+    balance: (
+      <Card className="border-l-4 border-l-blue-500">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+            <Wallet className="w-4 h-4 mr-2" />
+            Balance Total
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-foreground">
+            ${totalBalance.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {accounts?.length || 0} cuenta{accounts?.length !== 1 ? "s" : ""}
+          </p>
+        </CardContent>
+      </Card>
+    ),
+    debt: (
+      <Card className="border-l-4 border-l-red-500">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+            <CreditCard className="w-4 h-4 mr-2" />
+            Deuda Total
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-foreground">
+            ${totalDebt.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {creditCards?.length || 0} tarjeta{creditCards?.length !== 1 ? "s" : ""}
+          </p>
+        </CardContent>
+      </Card>
+    ),
+    income: (
+      <Card className="border-l-4 border-l-green-500">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Ingresos del Mes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-green-600">
+            ${totalIncome.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Mes actual</p>
+        </CardContent>
+      </Card>
+    ),
+    expenses: (
+      <Card className="border-l-4 border-l-orange-500">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+            <TrendingDown className="w-4 h-4 mr-2" />
+            Gastos del Mes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-orange-600">
+            ${totalExpenses.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Mes actual</p>
+        </CardContent>
+      </Card>
+    ),
+  };
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-6">
@@ -68,77 +200,36 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Financiero</h1>
-        <p className="text-muted-foreground mt-1">Resumen general de tus finanzas personales</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard Financiero</h1>
+          <p className="text-muted-foreground mt-1">Resumen general de tus finanzas personales</p>
+        </div>
+        {user?.role === "admin" && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowClearDialog(true)}
+            disabled={clearDataMutation.isPending}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Limpiar Datos
+          </Button>
+        )}
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-              <Wallet className="w-4 h-4 mr-2" />
-              Balance Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              ${totalBalance.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {accounts?.length || 0} cuenta{accounts?.length !== 1 ? "s" : ""}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-              <CreditCard className="w-4 h-4 mr-2" />
-              Deuda Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              ${totalDebt.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {creditCards?.length || 0} tarjeta{creditCards?.length !== 1 ? "s" : ""}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Ingresos del Mes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              ${totalIncome.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Mes actual</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-orange-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
-              <TrendingDown className="w-4 h-4 mr-2" />
-              Gastos del Mes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              ${totalExpenses.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Mes actual</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Summary Cards with Drag and Drop */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {cardOrder.map((cardId) => (
+              <div key={cardId}>
+                {summaryCards[cardId as keyof typeof summaryCards]}
+              </div>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Net Balance Card */}
       <Card className={`border-2 ${netBalance >= 0 ? "border-green-500" : "border-red-500"}`}>
@@ -267,6 +358,31 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Clear Data Confirmation Dialog */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Limpiar todos los datos?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente todas tus transacciones, cuentas, tarjetas de crédito y categorías personalizadas. No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 my-4">
+            <p className="text-sm text-destructive font-semibold">⚠️ Advertencia: Esta acción es irreversible</p>
+          </div>
+          <div className="flex gap-3">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearData}
+              disabled={clearDataMutation.isPending}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {clearDataMutation.isPending ? "Limpiando..." : "Limpiar Datos"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

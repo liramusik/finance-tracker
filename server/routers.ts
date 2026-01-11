@@ -7,6 +7,23 @@ import * as db from "./db";
 import { storagePut } from "./storage";
 import { processFile } from "./fileProcessor";
 import { categorizeTransaction, parseStatementText, getDefaultCategoryData } from "./aiCategorizer";
+import { TRPCError } from "@trpc/server";
+
+// Procedimiento protegido solo para admin
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Solo administradores pueden realizar esta acción" });
+  }
+  return next({ ctx });
+});
+
+// Procedimiento protegido para lectura (admin y viewer)
+const readProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin" && ctx.user.role !== "viewer") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "No tienes permiso para acceder" });
+  }
+  return next({ ctx });
+});
 
 export const appRouter = router({
   system: systemRouter,
@@ -45,7 +62,7 @@ export const appRouter = router({
         });
       }),
 
-    update: protectedProcedure
+    update: adminProcedure
       .input(z.object({
         id: z.number(),
         name: z.string().optional(),
@@ -67,7 +84,7 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    delete: protectedProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await db.deleteAccount(input.id, ctx.user.id);
@@ -339,6 +356,42 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         await db.deleteTransaction(input.id, ctx.user.id);
         return { success: true };
+      }),
+  }),
+
+  // Admin router
+  admin: router({
+    clearAllData: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new Error("No tienes permiso para limpiar datos");
+        }
+
+        try {
+          const transactions = await db.getTransactionsByUserId(ctx.user.id);
+          for (const tx of transactions) {
+            await db.deleteTransaction(tx.id, ctx.user.id);
+          }
+
+          const creditCards = await db.getCreditCardsByUserId(ctx.user.id);
+          for (const card of creditCards) {
+            await db.deleteCreditCard(card.id, ctx.user.id);
+          }
+
+          const accounts = await db.getAccountsByUserId(ctx.user.id);
+          for (const account of accounts) {
+            await db.deleteAccount(account.id, ctx.user.id);
+          }
+
+          const categories = await db.getCategoriesByUserId(ctx.user.id);
+          for (const category of categories) {
+            await db.deleteCategory(category.id, ctx.user.id);
+          }
+
+          return { success: true, message: "Todos los datos han sido eliminados" };
+        } catch (error) {
+          throw new Error(`Error al limpiar datos: ${error instanceof Error ? error.message : String(error)}`);
+        }
       }),
   }),
 

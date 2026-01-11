@@ -11,7 +11,7 @@ function createAuthContext(): { ctx: TrpcContext } {
     email: "test@example.com",
     name: "Test User",
     loginMethod: "manus",
-    role: "user",
+    role: "admin",
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
@@ -61,6 +61,7 @@ describe("Accounts Management", () => {
 
   it("should update an account", async () => {
     const { ctx } = createAuthContext();
+    ctx.user.role = "admin";
     const caller = appRouter.createCaller(ctx);
 
     // Create account first
@@ -83,6 +84,7 @@ describe("Accounts Management", () => {
 
   it("should delete an account", async () => {
     const { ctx } = createAuthContext();
+    ctx.user.role = "admin";
     const caller = appRouter.createCaller(ctx);
 
     // Create account first

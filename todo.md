@@ -96,3 +96,28 @@
 - [ ] Exportar reportes a PDF
 - [ ] Exportar resumen mensual
 - [ ] Exportar análisis de categorías
+
+
+## Mejoras Solicitadas - Fase 3
+
+### Limpiar Datos de Transacciones
+- [x] Crear función para resetear todas las transacciones
+- [x] Crear función para resetear cuentas bancarias
+- [x] Crear función para resetear tarjetas de crédito
+- [x] Crear función para resetear categorías personalizadas
+- [x] Agregar interfaz de confirmación antes de limpiar
+- [x] Agregar opción en menú de administración
+
+### Drag and Drop para Cards
+- [x] Instalar librería react-beautiful-dnd o similar
+- [x] Implementar drag and drop en dashboard
+- [ ] Guardar orden de cards en preferencias de usuario
+- [ ] Restaurar orden guardada al cargar dashboard
+
+### Sistema de Roles Avanzado
+- [x] Crear rol "Viewer" (solo lectura)
+- [x] Crear rol "Admin" (acceso completo)
+- [x] Restringir edición para rol Viewer
+- [x] Restringir eliminación para rol Viewer
+- [ ] Mostrar botones de acción según rol
+- [ ] Agregar interfaz de gestión de usuarios
