@@ -106,8 +106,8 @@ export default function FinanceDashboardLayout({ children }: { children: React.R
               const isActive = location === item.href;
               return (
                 <Link key={item.href} href={item.href}>
-                  <a
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                  <div
+                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -115,7 +115,7 @@ export default function FinanceDashboardLayout({ children }: { children: React.R
                   >
                     {item.icon}
                     <span className="ml-3">{item.title}</span>
-                  </a>
+                  </div>
                 </Link>
               );
             })}
@@ -183,9 +183,9 @@ export default function FinanceDashboardLayout({ children }: { children: React.R
               const isActive = location === item.href;
               return (
                 <Link key={item.href} href={item.href}>
-                  <a
+                  <div
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -193,7 +193,7 @@ export default function FinanceDashboardLayout({ children }: { children: React.R
                   >
                     {item.icon}
                     <span className="ml-3">{item.title}</span>
-                  </a>
+                  </div>
                 </Link>
               );
             })}
