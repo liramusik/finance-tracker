@@ -22,8 +22,12 @@ import {
   LogOut,
   Menu,
   X,
+  Moon,
+  Sun,
+  Lightbulb,
 } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface NavItem {
   title: string;
@@ -36,6 +40,7 @@ const navItems: NavItem[] = [
   { title: "Cuentas", href: "/accounts", icon: <Wallet className="w-5 h-5" /> },
   { title: "Tarjetas", href: "/cards", icon: <CreditCard className="w-5 h-5" /> },
   { title: "Transacciones", href: "/transactions", icon: <Receipt className="w-5 h-5" /> },
+  { title: "Recomendaciones", href: "/recommendations", icon: <Lightbulb className="w-5 h-5" /> },
   { title: "Subir Archivos", href: "/upload", icon: <Upload className="w-5 h-5" /> },
   { title: "Categorías", href: "/categories", icon: <Tag className="w-5 h-5" /> },
 ];
@@ -44,6 +49,7 @@ export default function FinanceDashboardLayout({ children }: { children: React.R
   const { user, loading } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const logoutMutation = trpc.auth.logout.useMutation();
 
   const handleLogout = async () => {
@@ -133,6 +139,20 @@ export default function FinanceDashboardLayout({ children }: { children: React.R
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {theme === "dark" ? (
+                    <>
+                      <Sun className="w-4 h-4 mr-2" />
+                      Modo Claro
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="w-4 h-4 mr-2" />
+                      Modo Oscuro
+                    </>
+                  )}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                   <LogOut className="w-4 h-4 mr-2" />

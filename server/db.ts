@@ -17,7 +17,13 @@ import {
   Transaction,
   uploadedFiles,
   InsertUploadedFile,
-  UploadedFile
+  UploadedFile,
+  loans,
+  InsertLoan,
+  Loan,
+  userPreferences,
+  InsertUserPreferences,
+  UserPreferences
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -387,4 +393,85 @@ export async function getUploadedFileById(id: number, userId: number): Promise<U
   ).limit(1);
 
   return result[0];
+}
+
+// ===== LOAN HELPERS =====
+
+export async function createLoan(loan: InsertLoan): Promise<Loan> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(loans).values(loan);
+  const insertedId = Number(result[0].insertId);
+  
+  const [inserted] = await db.select().from(loans).where(eq(loans.id, insertedId)).limit(1);
+  if (!inserted) throw new Error("Failed to retrieve inserted loan");
+  
+  return inserted;
+}
+
+export async function getLoansByUserId(userId: number): Promise<Loan[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(loans).where(eq(loans.userId, userId)).orderBy(desc(loans.createdAt));
+}
+
+export async function getLoanById(id: number, userId: number): Promise<Loan | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(loans).where(
+    and(eq(loans.id, id), eq(loans.userId, userId))
+  ).limit(1);
+
+  return result[0];
+}
+
+export async function updateLoan(id: number, userId: number, updates: Partial<InsertLoan>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(loans).set(updates).where(
+    and(eq(loans.id, id), eq(loans.userId, userId))
+  );
+}
+
+export async function deleteLoan(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(loans).where(
+    and(eq(loans.id, id), eq(loans.userId, userId))
+  );
+}
+
+// ===== USER PREFERENCES HELPERS =====
+
+export async function getUserPreferences(userId: number): Promise<UserPreferences | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
+  return result[0];
+}
+
+export async function createOrUpdateUserPreferences(userId: number, prefs: Partial<InsertUserPreferences>): Promise<UserPreferences> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await getUserPreferences(userId);
+  
+  if (existing) {
+    await db.update(userPreferences).set(prefs).where(eq(userPreferences.userId, userId));
+    const updated = await getUserPreferences(userId);
+    if (!updated) throw new Error("Failed to retrieve updated preferences");
+    return updated;
+  } else {
+    const result = await db.insert(userPreferences).values({ userId, ...prefs });
+    const insertedId = Number(result[0].insertId);
+    const [inserted] = await db.select().from(userPreferences).where(eq(userPreferences.id, insertedId)).limit(1);
+    if (!inserted) throw new Error("Failed to retrieve inserted preferences");
+    return inserted;
+  }
 }

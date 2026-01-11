@@ -125,3 +125,44 @@ export const uploadedFiles = mysqlTable("uploadedFiles", {
 
 export type UploadedFile = typeof uploadedFiles.$inferSelect;
 export type InsertUploadedFile = typeof uploadedFiles.$inferInsert;
+
+/**
+ * Bank loans table
+ */
+export const loans = mysqlTable("loans", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  bankName: varchar("bankName", { length: 255 }).notNull(),
+  loanName: varchar("loanName", { length: 255 }).notNull(),
+  loanType: mysqlEnum("loanType", ["personal", "mortgage", "auto", "student", "other"]).notNull(),
+  originalAmount: decimal("originalAmount", { precision: 15, scale: 2 }).notNull(),
+  currentBalance: decimal("currentBalance", { precision: 15, scale: 2 }).notNull(),
+  interestRate: decimal("interestRate", { precision: 5, scale: 2 }).notNull(),
+  monthlyPayment: decimal("monthlyPayment", { precision: 15, scale: 2 }).notNull(),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  color: varchar("color", { length: 7 }).default("#8b5cf6"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Loan = typeof loans.$inferSelect;
+export type InsertLoan = typeof loans.$inferInsert;
+
+/**
+ * User preferences table for theme and settings
+ */
+export const userPreferences = mysqlTable("userPreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  theme: mysqlEnum("theme", ["light", "dark", "system"]).default("system").notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  language: varchar("language", { length: 5 }).default("es").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertUserPreferences = typeof userPreferences.$inferInsert;

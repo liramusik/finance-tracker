@@ -11,6 +11,7 @@ import CreditCards from "./pages/CreditCards";
 import Transactions from "./pages/Transactions";
 import Upload from "./pages/Upload";
 import Categories from "./pages/Categories";
+import Recommendations from "./pages/Recommendations";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
         <Route path="/transactions" component={Transactions} />
         <Route path="/upload" component={Upload} />
         <Route path="/categories" component={Categories} />
+        <Route path="/recommendations" component={Recommendations} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
@@ -32,7 +34,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <Toaster />
           <Router />

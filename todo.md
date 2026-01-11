@@ -57,3 +57,42 @@
 - [x] Escribir tests para CRUD de tarjetas
 - [x] Escribir tests para CRUD de transacciones
 - [x] Escribir tests para filtros y búsqueda
+
+
+## Mejoras Solicitadas - Fase 2
+
+### Soporte para Préstamos Bancarios
+- [x] Agregar tabla de préstamos en base de datos
+- [x] Crear CRUD para gestión de préstamos
+- [ ] Implementar página de gestión de préstamos
+- [ ] Agregar transacciones de préstamos (desembolsos y pagos)
+
+### Modo Oscuro/Claro
+- [x] Implementar tema switchable en ThemeProvider
+- [x] Agregar selector de tema en interfaz
+- [ ] Guardar preferencia de tema en base de datos
+- [x] Actualizar paleta de colores para modo oscuro
+
+### Recomendaciones Financieras
+- [x] Crear sistema de análisis de gastos con IA
+- [x] Generar recomendaciones personalizadas
+- [x] Implementar página de recomendaciones
+- [ ] Agregar alertas de gastos anormales
+
+### Edición de Conceptos de Transacciones
+- [ ] Permitir renombrar conceptos personalizados
+- [ ] Guardar historial de cambios
+- [ ] Aplicar cambios retroactivamente (opcional)
+
+### Análisis y Reportes Avanzados
+- [ ] Crear página de análisis con múltiples vistas
+- [ ] Gráficos de tendencias mensuales/anuales
+- [ ] Análisis de patrones de gastos
+- [ ] Comparativas año a año
+- [ ] Proyecciones de gastos futuros
+
+### Exportación de Reportes y CSV
+- [ ] Exportar transacciones a CSV
+- [ ] Exportar reportes a PDF
+- [ ] Exportar resumen mensual
+- [ ] Exportar análisis de categorías
