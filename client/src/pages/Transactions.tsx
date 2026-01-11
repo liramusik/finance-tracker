@@ -6,16 +6,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, Search, Filter, TrendingUp, TrendingDown, Edit, Trash2 } from "lucide-react";
+import { Receipt, Search, Filter, TrendingUp, TrendingDown, Edit, Trash2, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Transactions() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   const { data: transactions, refetch } = trpc.transactions.list.useQuery();
   const { data: categories } = trpc.categories.list.useQuery();
@@ -23,6 +35,7 @@ export default function Transactions() {
   const { data: creditCards } = trpc.creditCards.list.useQuery();
   const deleteMutation = trpc.transactions.delete.useMutation();
   const updateMutation = trpc.transactions.update.useMutation();
+  const clearTransactionsMutation = trpc.admin.clearAllData.useMutation();
   const utils = trpc.useUtils();
 
   const filteredTransactions = useMemo(() => {
@@ -76,6 +89,18 @@ export default function Transactions() {
     }
   };
 
+  const handleClearTransactions = async () => {
+    try {
+      await clearTransactionsMutation.mutateAsync();
+      toast.success("Todas las transacciones han sido eliminadas correctamente");
+      setShowClearDialog(false);
+      refetch();
+      utils.transactions.summary.invalidate();
+    } catch (error) {
+      toast.error("Error al limpiar transacciones");
+    }
+  };
+
   const getCategoryName = (categoryId: number | null) => {
     if (!categoryId) return "Sin categoría";
     const category = categories?.find((c: any) => c.id === categoryId);
@@ -104,9 +129,22 @@ export default function Transactions() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Transacciones</h1>
-        <p className="text-muted-foreground mt-1">Historial completo de ingresos y gastos</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Transacciones</h1>
+          <p className="text-muted-foreground mt-1">Historial completo de ingresos y gastos</p>
+        </div>
+        {user?.role === "admin" && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowClearDialog(true)}
+            disabled={clearTransactionsMutation.isPending}
+          >
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Limpiar Transacciones
+          </Button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -383,6 +421,28 @@ export default function Transactions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Clear Transactions Dialog */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpiar todas las transacciones</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente todas las transacciones cargadas. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-end gap-2">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearTransactions}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={clearTransactionsMutation.isPending}
+            >
+              {clearTransactionsMutation.isPending ? "Limpiando..." : "Eliminar Todo"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

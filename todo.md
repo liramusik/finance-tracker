@@ -121,3 +121,22 @@
 - [x] Restringir eliminación para rol Viewer
 - [ ] Mostrar botones de acción según rol
 - [ ] Agregar interfaz de gestión de usuarios
+
+
+## Correcciones Solicitadas - Fase 4
+
+### Drag and Drop Funcional
+- [x] Implementar persistencia de orden de cards en localStorage
+- [x] Guardar preferencias de usuario al reordenar
+- [x] Restaurar orden guardada al cargar dashboard
+
+### Limpiar Datos
+- [ ] Eliminar datos de test de cuentas (requiere acceso DB directo)
+- [ ] Eliminar datos de test de tarjetas (requiere acceso DB directo)
+- [x] Mover botón de limpiar datos a sección de Transacciones
+- [x] Crear función para limpiar solo transacciones (no cuentas/tarjetas)
+
+### Mejoras Futuras
+- [ ] Edición de conceptos personalizados de transacciones
+- [ ] Exportación de reportes en CSV y PDF
+- [ ] Página de gestión de préstamos

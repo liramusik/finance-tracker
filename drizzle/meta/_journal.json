@@ -29,6 +29,27 @@
       "when": 1768163035898,
       "tag": "0003_charming_robin_chapel",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1768164657287,
+      "tag": "0004_black_spot",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1768164672526,
+      "tag": "0005_smooth_raider",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1768164918165,
+      "tag": "0006_blushing_carmella_unuscione",
+      "breakpoints": true
     }
   ]
 }

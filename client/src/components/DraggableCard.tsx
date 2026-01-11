@@ -5,7 +5,7 @@ import { GripVertical } from "lucide-react";
 
 interface DraggableCardProps {
   id: string;
-  title: string;
+  title?: string;
   children: React.ReactNode;
   isDragging?: boolean;
 }
@@ -41,10 +41,12 @@ export function DraggableCard({ id, title, children, isDragging }: DraggableCard
         >
           <GripVertical className="w-5 h-5 text-muted-foreground" />
         </div>
-        <CardHeader className="pl-12">
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="pl-12">{children}</CardContent>
+        {title && (
+          <CardHeader className="pl-12">
+            <CardTitle>{title}</CardTitle>
+          </CardHeader>
+        )}
+        <CardContent className={title ? "pl-12" : ""}>{children}</CardContent>
       </Card>
     </div>
   );

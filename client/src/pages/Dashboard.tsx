@@ -37,10 +37,18 @@ export default function Dashboard() {
   const { data: creditCards, isLoading: cardsLoading } = trpc.creditCards.list.useQuery();
   const { data: transactions, isLoading: transactionsLoading } = trpc.transactions.recent.useQuery({ limit: 100 });
   const { data: summary, isLoading: summaryLoading } = trpc.transactions.summary.useQuery();
-  const clearDataMutation = trpc.admin.clearAllData.useMutation();
 
-  const [cardOrder, setCardOrder] = useState<string[]>(["balance", "debt", "income", "expenses"]);
-  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [cardOrder, setCardOrder] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("cardOrder");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {}
+      }
+    }
+    return ["balance", "debt", "income", "expenses"];
+  });
 
   const isLoading = accountsLoading || cardsLoading || transactionsLoading || summaryLoading;
 
@@ -57,21 +65,15 @@ export default function Dashboard() {
       setCardOrder((items) => {
         const oldIndex = items.indexOf(active.id);
         const newIndex = items.indexOf(over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+        // Guardar preferencia en localStorage
+        localStorage.setItem("cardOrder", JSON.stringify(newOrder));
+        return newOrder;
       });
     }
   };
 
-  const handleClearData = async () => {
-    try {
-      await clearDataMutation.mutateAsync();
-      toast.success("Todos los datos han sido eliminados correctamente");
-      setShowClearDialog(false);
-      window.location.reload();
-    } catch (error) {
-      toast.error("Error al limpiar datos");
-    }
-  };
+
 
   // Calculate totals
   const totalBalance = useMemo(() => {
@@ -200,22 +202,9 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard Financiero</h1>
-          <p className="text-muted-foreground mt-1">Resumen general de tus finanzas personales</p>
-        </div>
-        {user?.role === "admin" && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowClearDialog(true)}
-            disabled={clearDataMutation.isPending}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Limpiar Datos
-          </Button>
-        )}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard Financiero</h1>
+        <p className="text-muted-foreground mt-1">Resumen general de tus finanzas personales</p>
       </div>
 
       {/* Summary Cards with Drag and Drop */}
@@ -223,9 +212,9 @@ export default function Dashboard() {
         <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {cardOrder.map((cardId) => (
-              <div key={cardId}>
+              <DraggableCard key={cardId} id={cardId}>
                 {summaryCards[cardId as keyof typeof summaryCards]}
-              </div>
+              </DraggableCard>
             ))}
           </div>
         </SortableContext>
@@ -359,30 +348,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Clear Data Confirmation Dialog */}
-      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Limpiar todos los datos?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción eliminará permanentemente todas tus transacciones, cuentas, tarjetas de crédito y categorías personalizadas. No se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 my-4">
-            <p className="text-sm text-destructive font-semibold">⚠️ Advertencia: Esta acción es irreversible</p>
-          </div>
-          <div className="flex gap-3">
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleClearData}
-              disabled={clearDataMutation.isPending}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {clearDataMutation.isPending ? "Limpiando..." : "Limpiar Datos"}
-            </AlertDialogAction>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
+
     </div>
   );
 }
